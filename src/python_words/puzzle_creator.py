@@ -1,7 +1,16 @@
-import os; import json; import curses; import re
-os.chdir(os.path.dirname(__file__))
+"""Puzzle creator module - allows users to create word search puzzles."""
+
+import os
+import json
+import curses
+import re
+
+# Ensure we're in the right directory
+MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(MODULE_DIR)
 
 PUZZLE_WIDTH = 15
+
 
 class State:
     def __init__(self, puzzle, message, selected, series):
@@ -9,10 +18,13 @@ class State:
         self.message = message
         self.selected = selected
         self.series = series
+
     def get_puzzle_path(self):
-        return f'..{os.path.sep}Puzzles{os.path.sep}{self.series}{os.path.sep}'
+        return f'Puzzles{os.path.sep}{self.series}{os.path.sep}'
+
     def get_words_from_puzzle(self):
         return list(self.puzzle.keys())
+
     def get_words_matching_regexp(self, regexp):
         words = list(self.puzzle.keys())
         matches = []
@@ -26,17 +38,17 @@ class State:
         except re.PatternError:
             return []
 
-#Displays the puzzle and gives details about it
+
+# Displays the puzzle and gives details about it
 def display_puzzle(puzzle):
     displayed_puzzle = ''
+
     def print_word_to_puzzle(opt, x, y, w):
         for index, i in enumerate(w):
             if opt == 'r':
                 display[y][index + x] = i
             else:
                 display[index + y][x] = i
-
-
 
     display = [[' ' for _ in range(PUZZLE_WIDTH)] for _ in range(PUZZLE_WIDTH)]
     words = []
@@ -48,7 +60,7 @@ def display_puzzle(puzzle):
         displayed_puzzle += f"\n{''.join(display[j])}{j}"
     displayed_puzzle += '\n012345678901234\n'
 
-    #Prints letters used in the puzzle
+    # Prints letters used in the puzzle
     letters = []
     mixed_words = ''.join(words)
     legal_letters = set(mixed_words)
@@ -63,14 +75,16 @@ def display_puzzle(puzzle):
     displayed_puzzle += f"\nLetters: {letters}\n"
     return displayed_puzzle
 
-def add_word(word):
+
+def add_word(word, user_state):
     if word.isalpha():
-        user_state.puzzle.__setitem__(word.upper(), {'direction':'r', 'x':0, 'y':0})
+        user_state.puzzle.__setitem__(word.upper(), {'direction': 'r', 'x': 0, 'y': 0})
         user_state.message = f"word {word.upper()} added to puzzle"
     else:
         user_state.message = "Invalid word"
 
-def remove_word(word):
+
+def remove_word(word, user_state):
     if word.upper() in user_state.selected:
         user_state.selected.remove(word.upper())
     try:
@@ -79,31 +93,33 @@ def remove_word(word):
     except:
         user_state.message = f'Could not find the word {word} to remove'
 
-def remove_words_by_regexp(regexp):
+
+def remove_words_by_regexp(regexp, user_state):
     words_to_remove = user_state.get_words_matching_regexp(regexp)
     for word in words_to_remove:
-            if word in user_state.selected:
-                user_state.selected.remove(word)
-            if word in user_state.puzzle:
-                user_state.puzzle.pop(word)
-
-   
+        if word in user_state.selected:
+            user_state.selected.remove(word)
+        if word in user_state.puzzle:
+            user_state.puzzle.pop(word)
 
 
-def select_word(word):
+def select_word(word, user_state):
     if not word.upper() in user_state.puzzle:
         user_state.message = "Word not found in puzzle"
     else:
         user_state.selected = [word.upper()]
         user_state.message = f"word {word.upper()} selected"
 
-def select_words_by_regexp(regexp):
+
+def select_words_by_regexp(regexp, user_state):
     user_state.selected = user_state.get_words_matching_regexp(regexp)
 
-def save_puzzle(puzzle_integer):
+
+def save_puzzle(puzzle_integer, user_state):
     puzzle_path = user_state.get_puzzle_path()
-    try: os.listdir(puzzle_path)
-    except: 
+    try:
+        os.listdir(puzzle_path)
+    except:
         if puzzle_integer == 1:
             os.mkdir(puzzle_path)
 
@@ -126,7 +142,8 @@ def save_puzzle(puzzle_integer):
             json.dump(user_state.puzzle, f, indent=4)
             user_state.message = f'Puzzle {puzzle_integer} was overwritten'
 
-def load_puzzle(name):
+
+def load_puzzle(name, user_state):
     puzzle_path = user_state.get_puzzle_path()
     try:
         with open(f'{puzzle_path}{name}.json', 'r') as f:
@@ -136,58 +153,63 @@ def load_puzzle(name):
     except:
         user_state.message = f'Puzzle {name} doesn\'t exist'
 
-def move_puzzle(puzzle_number, location):
+
+def move_puzzle(puzzle_number, location, user_state, stdscr):
     puzzle_path = user_state.get_puzzle_path()
     puzzles = os.listdir(puzzle_path)
-    try: 
+    try:
         puzzle_number = int(puzzle_number)
         location = int(location)
         if location < 1:
             user_state.message = 'the location integer must be positive'
-    except: user_state.message = 'the arguments must be integers'
+    except:
+        user_state.message = 'the arguments must be integers'
 
     if location > len(puzzles):
         user_state.message = "can't move puzzle to that location. location out of bounds"
         return
 
-    try: os.rename(f'{puzzle_path}{puzzle_number}.json', f'{puzzle_path}moving.json')
-    except: 
+    try:
+        os.rename(f'{puzzle_path}{puzzle_number}.json', f'{puzzle_path}moving.json')
+    except:
         user_state.message = f"puzzle {puzzle_number} does not exist!"
         return
-    #Renames puzzles in front of puzzle
+    # Renames puzzles in front of puzzle
     i = puzzle_number
     while i < len(puzzles):
-        try: os.rename(f'{puzzle_path}{i + 1}.json', f'{puzzle_path}{i}.json')
-        except: 
-            stdscr.clear(); 
-            stdscr.addstr(f"an error occurred: could not find puzzle {i + 1} in {user_state.series}\nPlease make sure that all the puzzles in the series are integers and that no numbers are missing.\n\n\nPress any key to continue") 
+        try:
+            os.rename(f'{puzzle_path}{i + 1}.json', f'{puzzle_path}{i}.json')
+        except:
+            stdscr.clear()
+            stdscr.addstr(f"an error occurred: could not find puzzle {i + 1} in {user_state.series}\nPlease make sure that all the puzzles in the series are integers and that no numbers are missing.\n\n\nPress any key to continue")
             stdscr.getkey()
 
         i += 1
-    #Renames puzzles in front of new puzzle location
+    # Renames puzzles in front of new puzzle location
     n = len(puzzles) - 1
     while n >= location:
-        try: os.rename(f'{puzzle_path}{n}.json', f'{puzzle_path}{n + 1}.json')
+        try:
+            os.rename(f'{puzzle_path}{n}.json', f'{puzzle_path}{n + 1}.json')
         except:
-            stdscr.clear();
-            stdscr.addstr(f"an error occurred: could not find puzzle {n} in {user_state.series}\nPlease make sure that all the puzzles in the series are integers and that no numbers are missing\n\n\nPress any key to continue") 
+            stdscr.clear()
+            stdscr.addstr(f"an error occurred: could not find puzzle {n} in {user_state.series}\nPlease make sure that all the puzzles in the series are integers and that no numbers are missing\n\n\nPress any key to continue")
             stdscr.getkey()
         n -= 1
-    try: os.rename(f'{puzzle_path}moving.json', f'{puzzle_path}{location}.json')
-    except: 
-        stdscr.clear(); 
+    try:
+        os.rename(f'{puzzle_path}moving.json', f'{puzzle_path}{location}.json')
+    except:
+        stdscr.clear()
         stdscr.addstr("an error occurred changing the name of the moving.json file, you may need to do this manually\n\n\nPress any key to continue")
         stdscr.getkey()
 
 
-
-def move_words(words, x, y):
+def move_words(words, x, y, user_state):
     if not words:
         user_state.message = "Cannot move word. Word not selected"
         return
     try:
-       x =  int(x)
-       y = int(y)
+        x = int(x)
+        y = int(y)
     except:
         user_state.message = "x and y coordinates must be integers"
         return
@@ -195,7 +217,7 @@ def move_words(words, x, y):
         word_x = user_state.puzzle[word]['x']
         word_y = user_state.puzzle[word]['y']
         word_direction = user_state.puzzle[word]['direction']
-        #Move word in x direction
+        # Move word in x direction
         if (len(word) + x + word_x > PUZZLE_WIDTH and word_direction == 'r') or word_x + x + 1 > PUZZLE_WIDTH:
             user_state.puzzle[word]['x'] = 0
         elif word_x + x < 0 and word_direction == 'r':
@@ -205,7 +227,7 @@ def move_words(words, x, y):
         else:
             user_state.puzzle[word]['x'] = user_state.puzzle[word]['x'] + x
 
-        #Move word in y direction
+        # Move word in y direction
         if (len(word) + y + word_y > PUZZLE_WIDTH and word_direction == 'd') or word_y + y + 1 > PUZZLE_WIDTH:
             user_state.puzzle[word]['y'] = 0
         elif word_y + y < 0 and word_direction == 'd':
@@ -215,7 +237,8 @@ def move_words(words, x, y):
         else:
             user_state.puzzle[word]['y'] = user_state.puzzle[word]['y'] + y
 
-def rotate_words(words):
+
+def rotate_words(words, user_state):
     if not user_state.selected:
         user_state.message = "No words are selected to rotate"
         return
@@ -224,44 +247,53 @@ def rotate_words(words):
         word_y = user_state.puzzle[word]['y']
         word_direction = user_state.puzzle[word]['direction']
 
-        #test if word is out of bounds if rotated
+        # Test if word is out of bounds if rotated
         if (len(word) + word_x - 1 > 14 and word_direction == 'd') or (len(word) + word_y - 1 > 14 and word_direction == 'r'):
             user_state.message = f'Could not rotate {word}, it would go out of bounds'
             return
-    #rotates the word
+    # Rotates the word
     for word in words:
         if user_state.puzzle[word]['direction'] == 'r':
             user_state.puzzle[word]['direction'] = 'd'
         else:
             user_state.puzzle[word]['direction'] = 'r'
         user_state.message = f"words rotated"
- 
 
-def delete_puzzle(puzzle_number):
+
+def delete_puzzle(puzzle_number, user_state, stdscr):
     puzzle_path = user_state.get_puzzle_path()
-    try: puzzle_number = int(puzzle_number)
-    except: user_state.message = 'the argument must be an integer'
-    try: os.remove(f'{puzzle_path}{puzzle_number}.json')
-    except: 
+    try:
+        puzzle_number = int(puzzle_number)
+    except:
+        user_state.message = 'the argument must be an integer'
+    try:
+        os.remove(f'{puzzle_path}{puzzle_number}.json')
+    except:
         user_state.message = f"puzzle {puzzle_number} does not exist!"
         return
     puzzles = os.listdir(puzzle_path)
     n = puzzle_number
     while n <= len(puzzles):
-        try: os.rename(f'{puzzle_path}{n + 1}.json', f'{puzzle_path}{n}.json')
+        try:
+            os.rename(f'{puzzle_path}{n + 1}.json', f'{puzzle_path}{n}.json')
         except:
             stdscr.clear()
-            stdscr.addstr(f"an error occurred: could not find puzzle {n + 1} in {series}\nPlease make sure that all the puzzles in the series are integers and that no numbers are missing\n\n\nPress any key to continue");
-            stdscr.getkey(); return
+            stdscr.addstr(f"an error occurred: could not find puzzle {n + 1} in {user_state.series}\nPlease make sure that all the puzzles in the series are integers and that no numbers are missing\n\n\nPress any key to continue")
+            stdscr.getkey()
+            return
         n += 1
     user_state.message = f"puzzle {puzzle_number} deleted"
     if len(os.listdir(puzzle_path)) == 0:
         os.rmdir(puzzle_path)
 
-def view_series(series):
+
+def view_series(series, user_state):
     puzzle_path = user_state.get_puzzle_path()
-    try: os.listdir(puzzle_path)
-    except: user_state.message = "This series doesn't have any puzzles in it!"; return
+    try:
+        os.listdir(puzzle_path)
+    except:
+        user_state.message = "This series doesn't have any puzzles in it!"
+        return
     number_of_puzzles_in_series = len(os.listdir(puzzle_path))
     report = f'Levels in {series}\n\nNumber of puzzles: {number_of_puzzles_in_series}\n\n'
     for puzzle in range(number_of_puzzles_in_series):
@@ -269,7 +301,8 @@ def view_series(series):
             report += f"Level {puzzle + 1}\n\n{display_puzzle(json.load(f))}\n"
     os.system(f'echo "{report}" | more' if os.name == 'nt' else f'echo "{report}" | less')
 
-def print_bold_word(word):
+
+def print_bold_word(word, user_state, stdscr):
     if word != "":
         if user_state.puzzle[word]['direction'] == 'r':
             stdscr.addstr(1 + user_state.puzzle[word]['y'], user_state.puzzle[word]['x'], word, curses.A_BOLD)
@@ -277,11 +310,12 @@ def print_bold_word(word):
             for i in range(len(word)):
                 stdscr.addstr(1 + user_state.puzzle[word]['y'] + i, user_state.puzzle[word]['x'], word[i], curses.A_BOLD)
 
-def input_string(message, behavior):
+
+def input_string(message, behavior, user_state, stdscr):
     if behavior == "words":
         tab_array = user_state.get_words_from_puzzle()
     elif behavior == "series":
-        tab_array = os.listdir(f"..{os.path.sep}Puzzles")
+        tab_array = os.listdir(f"Puzzles")
     elif behavior == "puzzles":
         tab_array = []
         for i in range(len(os.listdir(user_state.get_puzzle_path()))):
@@ -303,14 +337,14 @@ def input_string(message, behavior):
         stdscr.refresh()
         if behavior == 'regexp':
             for i in user_state.get_words_matching_regexp(input_str):
-                print_bold_word(i)
+                print_bold_word(i, user_state, stdscr)
             stdscr.addstr(23, len(formated_message) + cursor_location, '')
         elif behavior == 'words':
             if input_str.upper() in user_state.puzzle:
-                print_bold_word(input_str.upper())
+                print_bold_word(input_str.upper(), user_state, stdscr)
             stdscr.addstr(23, len(formated_message) + cursor_location, '')
         key = stdscr.getch()
-        
+
         if (key == curses.KEY_BACKSPACE or key == 127) and cursor_location > 0:
             input_str = input_str[:cursor_location - 1] + input_str[cursor_location:]
             cursor_location -= 1
@@ -325,7 +359,7 @@ def input_string(message, behavior):
                     user_state.message = f"There are {len(tab_array)} puzzles in this series"
                     with open(f'{user_state.get_puzzle_path()}{tab_array[times_pressed_tab % len(tab_array)] }.json', 'r') as f:
                         puzzle = json.load(f)
-        elif key == 27: #27 is for the escape key
+        elif key == 27:  # 27 is for the escape key
             return ''
         elif key == curses.KEY_LEFT and not cursor_location == 0:
             cursor_location -= 1
@@ -341,112 +375,144 @@ def input_string(message, behavior):
     stdscr.refresh()
     return input_str
 
-def read_input(user_input):
-    try: user_input = chr(user_input);
-    except ValueError: return;
+
+def read_input(user_input, user_state, stdscr):
+    try:
+        user_input = chr(user_input)
+    except ValueError:
+        return
+    
+    global series
+    
     match user_input:
-    #WORD COMMANDS
+        # WORD COMMANDS
         case 'a':
-            word = input_string("What word do you want to add? ", 'null')
+            word = input_string("What word do you want to add? ", 'null', user_state, stdscr)
             if not word:
                 return
             if len(word) > PUZZLE_WIDTH:
                 user_state.message = f"Word must be less than {PUZZLE_WIDTH + 1} characters long!"
                 return
-            add_word(word)
+            add_word(word, user_state)
             if not word.upper() in user_state.selected and word.upper() in user_state.get_words_from_puzzle():
-                select_word(word)
+                select_word(word, user_state)
         case 'd':
-            word = input_string("What word do you want to delete? ", 'words')
+            word = input_string("What word do you want to delete? ", 'words', user_state, stdscr)
             if not word:
                 return
             if not word.upper() in user_state.puzzle:
                 user_state.message = f"Can't delete {word}. word not in puzzle"
                 return
-            remove_word(word)
+            remove_word(word, user_state)
         case 'D':
-            regexp = input_string("Delete words matching a regular expression ", 'regexp')
-            remove_words_by_regexp(regexp)
+            regexp = input_string("Delete words matching a regular expression ", 'regexp', user_state, stdscr)
+            remove_words_by_regexp(regexp, user_state)
         case 's':
-            word = input_string("Select a word ", 'words')
+            word = input_string("Select a word ", 'words', user_state, stdscr)
             if not word:
                 return
             if not word.upper() in user_state.puzzle:
                 user_state.message = f"Can't select {word}. word not in puzzle"
                 return
-            select_word(word)
+            select_word(word, user_state)
         case 'S':
-            regexp = input_string("Select words in a regular expression ", 'regexp')
-            select_words_by_regexp(regexp)
-    #MOVEMENT COMMANDS
+            regexp = input_string("Select words in a regular expression ", 'regexp', user_state, stdscr)
+            select_words_by_regexp(regexp, user_state)
+        # MOVEMENT COMMANDS
         case key if key == 'h' or key == chr(curses.KEY_LEFT):
-            move_words(user_state.selected, -1, 0)
+            move_words(user_state.selected, -1, 0, user_state)
         case key if key == 'j' or key == chr(curses.KEY_DOWN):
-            move_words(user_state.selected, 0, 1)
+            move_words(user_state.selected, 0, 1, user_state)
         case key if key == 'k' or key == chr(curses.KEY_UP):
-            move_words(user_state.selected, 0, -1)
+            move_words(user_state.selected, 0, -1, user_state)
         case key if key == 'l' or key == chr(curses.KEY_RIGHT):
-            move_words(user_state.selected, 1, 0)
+            move_words(user_state.selected, 1, 0, user_state)
         case 'r':
-            rotate_words(user_state.selected)
-    #SERIES COMMANDS 
+            rotate_words(user_state.selected, user_state)
+        # SERIES COMMANDS
         case 'c':
-            series = input_string("Enter the name of a series you want to create/edit: ", 'series')
-            if series.isalnum():
-                user_state.series = series
+            series_name = input_string("Enter the name of a series you want to create/edit: ", 'series', user_state, stdscr)
+            if series_name.isalnum():
+                user_state.series = series_name
         case 'o':
-            try: os.listdir(user_state.get_puzzle_path())
-            except: user_state.message = "The series you are editing contains no puzzles"; return
-            puzzle_integer = input_string('Enter a puzzle number to load: ', 'puzzles')
-            load_puzzle(puzzle_integer)
+            try:
+                os.listdir(user_state.get_puzzle_path())
+            except:
+                user_state.message = "The series you are editing contains no puzzles"
+                return
+            puzzle_integer = input_string('Enter a puzzle number to load: ', 'puzzles', user_state, stdscr)
+            load_puzzle(puzzle_integer, user_state)
         case 'q':
             curses.endwin()
             exit()
         case 'v':
-            view_series(user_state.series)
+            view_series(user_state.series, user_state)
         case 'w':
             try:
-                save_puzzle(len(os.listdir(user_state.get_puzzle_path())) + 1)
+                save_puzzle(len(os.listdir(user_state.get_puzzle_path())) + 1, user_state)
             except:
-                save_puzzle(1)
+                save_puzzle(1, user_state)
         case 'W':
-            try: requested_integer = int(input_string("Enter a puzzle number to overwrite: ", 'puzzles'))
-            except: user_state.message = "Not a number"; return
-            save_puzzle(requested_integer)
+            try:
+                requested_integer = int(input_string("Enter a puzzle number to overwrite: ", 'puzzles', user_state, stdscr))
+            except:
+                user_state.message = "Not a number"
+                return
+            save_puzzle(requested_integer, user_state)
         case 'x':
-            try: os.listdir(user_state.get_puzzle_path())
-            except: user_state.message = "The series you are editing contains no puzzles"; return
-            puzzle_integer = input_string("What puzzle do you want to delete?: ", 'puzzles')
-            delete_puzzle(puzzle_integer)
+            try:
+                os.listdir(user_state.get_puzzle_path())
+            except:
+                user_state.message = "The series you are editing contains no puzzles"
+                return
+            puzzle_integer = input_string("What puzzle do you want to delete?: ", 'puzzles', user_state, stdscr)
+            delete_puzzle(puzzle_integer, user_state, stdscr)
         case 'm':
-            try: os.listdir(user_state.get_puzzle_path())
-            except: user_state.message = "The series you are editing contains no puzzles"; return
-            try: puzzle_integer = int(input_string('Where puzzle do you want to move?: ', 'puzzles'))
-            except: user_state.message = "Not a number"; return
-            try: location = int(input_string('Where do you want to move the puzzle? :', 'puzzles'))
-            except: user_state.message = "Not a number"; return
-            move_puzzle(puzzle_integer, location)
+            try:
+                os.listdir(user_state.get_puzzle_path())
+            except:
+                user_state.message = "The series you are editing contains no puzzles"
+                return
+            try:
+                puzzle_integer = int(input_string('Where puzzle do you want to move?: ', 'puzzles', user_state, stdscr))
+            except:
+                user_state.message = "Not a number"
+                return
+            try:
+                location = int(input_string('Where do you want to move the puzzle? :', 'puzzles', user_state, stdscr))
+            except:
+                user_state.message = "Not a number"
+                return
+            move_puzzle(puzzle_integer, location, user_state, stdscr)
         case key if key == '?' or key == chr(curses.KEY_HELP):
             os.system('more ..\\docs\\creating-puzzles.txt' if os.name == 'nt' else 'less ../docs/creating-puzzles.txt')
         case _:
             return
 
 
-#Allows user to input commands
-user_state = State({}, 'Welcome to Python Words! Type "?" for help', [], 'Custom')
-stdscr = curses.initscr()
+def main():
+    """Main entry point for the puzzle creator module."""
+    os.chdir(PROJECT_ROOT)
+    
+    # Allows user to input commands
+    user_state = State({}, 'Welcome to Python Words! Type "?" for help', [], 'Custom')
+    stdscr = curses.initscr()
 
-stdscr.keypad(True)
-while True:
-    stdscr.clear()
-    stdscr.addstr(display_puzzle(user_state.puzzle))
-    stdscr.addstr(f"SERIES: {user_state.series}\n")
-    stdscr.addstr(f"{user_state.message}\n\n")
-    for i in user_state.selected:
-        print_bold_word(i)
-    stdscr.addstr(23, 0, "")
-    try:
-        key = stdscr.getch()
-        read_input(key)
-    except KeyboardInterrupt:
-        user_state.message = "Press 'q' to exit the program"
+    stdscr.keypad(True)
+    while True:
+        stdscr.clear()
+        stdscr.addstr(display_puzzle(user_state.puzzle))
+        stdscr.addstr(f"SERIES: {user_state.series}\n")
+        stdscr.addstr(f"{user_state.message}\n\n")
+        for i in user_state.selected:
+            print_bold_word(i, user_state, stdscr)
+        stdscr.addstr(23, 0, "")
+        try:
+            key = stdscr.getch()
+            read_input(key, user_state, stdscr)
+        except KeyboardInterrupt:
+            user_state.message = "Press 'q' to exit the program"
+
+
+if __name__ == "__main__":
+    main()

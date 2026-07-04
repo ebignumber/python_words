@@ -1,17 +1,44 @@
-import os; import random; import json
-os.chdir(os.path.dirname(__file__))
+"""Word finder game module - allows users to play word search puzzles."""
+
+import os
+import random
+import json
+import sys
+
+# Module-level state
 has_played_a_round = False
 difficulty = 'normal'
 contracted = False
 series = ''
 puzzle_path = ''
 message = ''
+puzzle_list = []
+word_list = []
+found_words = []
+current_puzzle = []
+puzzle_data = {}
+letters = []
+puzzle_number = None
 
-#reads series in Puzzles
+# Ensure we're in the right directory
+MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(MODULE_DIR)
+
+
+def initialize_paths():
+    """Initialize the paths for puzzle data."""
+    global puzzle_path
+    os.chdir(PROJECT_ROOT)
+
+
+# Reads series in Puzzles
 def start_game():
     global series
     global puzzle_path
-    puzzles = os.listdir(f'..{os.path.sep}Puzzles')
+    global has_played_a_round
+    
+    initialize_paths()
+    puzzles = os.listdir(f'Puzzles')
     for index, i in enumerate(puzzles):
         print(str(index + 1) + ': ' + str(i))
     while True:
@@ -19,17 +46,22 @@ def start_game():
             print('Select a series you want to play:\n')
             select_series = input('')
         if select_series.isnumeric() and not "-" in select_series and not select_series == '0':
-            try: series = puzzles[int(select_series) - 1]; break
-            except: print("Number must be one of the options")
-        else: print('Your input must be a number listed')
-    puzzle_path = f'..{os.path.sep}Puzzles{os.path.sep}{series}'
-start_game()
+            try:
+                series = puzzles[int(select_series) - 1]
+                break
+            except:
+                print("Number must be one of the options")
+        else:
+            print('Your input must be a number listed')
+    puzzle_path = f'Puzzles{os.path.sep}{series}'
 
-#Select the puzzle
-def select_puzzle(): #This function needs to be updated
+
+# Select the puzzle
+def select_puzzle():
     global puzzle_number
+    global has_played_a_round
 
-    #reads puzzle_number
+    # Reads puzzle_number
     if not has_played_a_round: 
         while True: 
             try:
@@ -47,8 +79,9 @@ def select_puzzle(): #This function needs to be updated
         puzzle_number += 1
     if puzzle_number == 'exit':
         exit()
-select_puzzle()
-#converts puzzle to a list of lists
+
+
+# Converts puzzle to a list of lists
 def empty_puzzle_list():
     global puzzle_list
     puzzle_list = []
@@ -58,9 +91,9 @@ def empty_puzzle_list():
             puzzle_list.append([' '])
         puzzle_list[(225 - n) // 15].append(' ')
         n -= 1
-empty_puzzle_list()
 
-#adds words to the puzzle and collects them in an list to guess
+
+# Adds words to the puzzle and collects them in a list to guess
 def add_word_to_puzzle(opt, x, y, w, word_found):
     for index, i in enumerate(w):
         if word_found == False:
@@ -73,22 +106,20 @@ def add_word_to_puzzle(opt, x, y, w, word_found):
                 puzzle_list[y][index + x] = i
             else:
                 puzzle_list[index + y][x] = i
-      
-#Gets new puzzle to play
+
+
+# Gets new puzzle to play
 def get_puzzle():
-    with open(f'{puzzle_path}{os.path.sep}{puzzle_number}.json', 'r') as f: #Opens path to puzzle
-        global puzzle_data
+    global puzzle_data, word_list, puzzle_list
+    with open(f'{puzzle_path}{os.path.sep}{puzzle_number}.json', 'r') as f:  # Opens path to puzzle
         puzzle_data = json.load(f)
         print(puzzle_data)
-    global word_list
     word_list = list(puzzle_data.keys())
     for word in word_list:
         add_word_to_puzzle(puzzle_data[word]['direction'], puzzle_data[word]['x'], puzzle_data[word]['y'], word, False)
 
-get_puzzle()
 
-#updates the puzzle to add the puzzle
-found_words = []
+# Updates the puzzle to add the puzzle
 def update_puzzle(word):
     result = puzzle_data[word]
     add_word_to_puzzle(result['direction'], result['x'], result['y'], word, True)
@@ -96,11 +127,13 @@ def update_puzzle(word):
     puzzle_data.pop(word)
     word_list.pop(word_list.index(word))
 
+
 def display_puzzle(puzzle):
     for i in range(15):
         print(''.join(puzzle[i]))
 
-#Adds the letters that are used in the puzzle
+
+# Adds the letters that are used in the puzzle
 def collect_legal_letters(list):
     global letters
     if difficulty == 'normal':
@@ -121,12 +154,13 @@ def collect_legal_letters(list):
         else:
             for k in range(max(occurrences)):
                 letters.append(i)
-            
+
+
 def read_command(command):
     global current_puzzle, puzzle_data, difficulty, letters, contracted, message
     match command:
         case "/":
-            with open(f"..{os.path.sep}docs{os.path.sep}wordfinder-commands.txt", 'r') as f:
+            with open(f"docs{os.path.sep}wordfinder-commands.txt", 'r') as f:
                 message = f.read()
 
         case "/COMPACT":
@@ -153,7 +187,7 @@ def read_command(command):
                         letters.insert(index, letter)
 
         case "/EXIT":
-            exit()
+            sys.exit()
 
         case "/HINT":
             word_to_hint = word_list[random.randint(0, len(word_list) - 1)]
@@ -190,12 +224,13 @@ def read_command(command):
                 random_int = random.randint(0, len(current_letters) - 1)
                 letters.append(current_letters[random_int])
                 current_letters.pop(random_int)
-            
+
         case _:
             message = 'Not a command\n'
             return
 
-#Tries to find the guessed word in the list of words  
+
+# Tries to find the guessed word in the list of words  
 def guess_word():
     global message
     guess = input('Guess a word or type "/" for a list of commands:\n\n').upper()
@@ -212,11 +247,13 @@ def guess_word():
     elif guess in word_list:
         update_puzzle(guess)
         message = 'Word Found\n'
-        if difficulty == 'easy': collect_legal_letters(word_list)
+        if difficulty == 'easy':
+            collect_legal_letters(word_list)
     else:
         message = 'Word Not Found\n'
 
-#Plays the game
+
+# Plays the game
 def play_game():
     global letters, current_puzzle, message
     current_puzzle = puzzle_list
@@ -233,26 +270,60 @@ def play_game():
     display_puzzle(current_puzzle)
     print(f'You completed puzzle {puzzle_number}!\n')
 
-#The loop calling the other functions
-while True:
-    play_game()
-    if puzzle_number < len(os.listdir(puzzle_path)):
-        yes_or_no = input('Would you like to play the next level? \nn: no\ns: start new level\nany other key: start next level\n')
-    else:
-        yes_or_no = input('Congrats! you finished the series! Would you like to play another series? \nn: no\n')
-    if yes_or_no == 'n':
-        break
-    elif puzzle_number >= len(os.listdir(puzzle_path)) or yes_or_no == 's':
-        print('\n')
-        has_played_a_round = False
-        start_game()
-        select_puzzle()
-        empty_puzzle_list()
-        get_puzzle()
-        found_words.clear()
-    else:
-        has_played_a_round = True
-        select_puzzle()
-        empty_puzzle_list()
-        get_puzzle()
-        found_words.clear()
+
+def main():
+    """Main entry point for the wordfinder module."""
+    global has_played_a_round, series, puzzle_number
+    
+    initialize_paths()
+    
+    # Reset global state for a fresh game
+    global has_played_a_round, difficulty, contracted, series, puzzle_path, message
+    global puzzle_list, word_list, found_words, current_puzzle, puzzle_data, letters, puzzle_number
+    
+    has_played_a_round = False
+    difficulty = 'normal'
+    contracted = False
+    series = ''
+    puzzle_path = ''
+    message = ''
+    puzzle_list = []
+    word_list = []
+    found_words = []
+    current_puzzle = []
+    puzzle_data = {}
+    letters = []
+    puzzle_number = None
+    
+    start_game()
+    select_puzzle()
+    empty_puzzle_list()
+    get_puzzle()
+
+    # The loop calling the other functions
+    while True:
+        play_game()
+        if puzzle_number < len(os.listdir(puzzle_path)):
+            yes_or_no = input('Would you like to play the next level? \n\nn: no\ns: start new level\nany other key: start next level\n')
+        else:
+            yes_or_no = input('Congrats! you finished the series! Would you like to play another series? \n\nn: no\n')
+        if yes_or_no == 'n':
+            break
+        elif puzzle_number >= len(os.listdir(puzzle_path)) or yes_or_no == 's':
+            print('\n')
+            has_played_a_round = False
+            start_game()
+            select_puzzle()
+            empty_puzzle_list()
+            get_puzzle()
+            found_words.clear()
+        else:
+            has_played_a_round = True
+            select_puzzle()
+            empty_puzzle_list()
+            get_puzzle()
+            found_words.clear()
+
+
+if __name__ == "__main__":
+    main()
