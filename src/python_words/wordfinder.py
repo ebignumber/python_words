@@ -4,21 +4,8 @@ import os
 import random
 import json
 import sys
-
-# Module-level state
-has_played_a_round = False
-difficulty = 'normal'
-contracted = False
-series = ''
-puzzle_path = ''
-message = ''
-puzzle_list = []
-word_list = []
-found_words = []
-current_puzzle = []
-puzzle_data = {}
-letters = []
-puzzle_number = None
+from pathlib import Path
+from python_words.config import get_config_path
 
 # Ensure we're in the right directory
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -38,7 +25,7 @@ def start_game():
     global has_played_a_round
     
     initialize_paths()
-    puzzles = os.listdir(f'Puzzles')
+    puzzles = os.listdir(puzzle_path)
     for index, i in enumerate(puzzles):
         print(str(index + 1) + ': ' + str(i))
     while True:
@@ -53,7 +40,7 @@ def start_game():
                 print("Number must be one of the options")
         else:
             print('Your input must be a number listed')
-    puzzle_path = f'Puzzles{os.path.sep}{series}'
+    puzzle_path = f'{puzzle_path}{os.path.sep}{series}'
 
 
 # Select the puzzle
@@ -159,9 +146,9 @@ def collect_legal_letters(list):
 def read_command(command):
     global current_puzzle, puzzle_data, difficulty, letters, contracted, message
     match command:
-        case "/":
-            with open(f"docs{os.path.sep}wordfinder-commands.txt", 'r') as f:
-                message = f.read()
+        #case "/":
+        #    with open(f"docs{os.path.sep}wordfinder-commands.txt", 'r') as f:
+        #        message = f.read()
 
         case "/COMPACT":
             letter_set = set(letters)
@@ -235,12 +222,9 @@ def guess_word():
     global message
     guess = input('Guess a word or type "/" for a list of commands:\n\n').upper()
     print('\n')
-    try:
-        if guess[0] == '/':
-            read_command(guess)
-            return
-    except:
-        pass
+    if guess[0] == '/':
+        read_command(guess)
+        return
 
     if guess in found_words:
         message = 'Word Already Guessed\n'
@@ -285,7 +269,7 @@ def main():
     difficulty = 'normal'
     contracted = False
     series = ''
-    puzzle_path = ''
+    puzzle_path = get_config_path() / "Puzzles"
     message = ''
     puzzle_list = []
     word_list = []

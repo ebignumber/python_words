@@ -4,6 +4,7 @@ import os
 import json
 import curses
 import re
+from python_words.config import get_config_path
 
 # Ensure we're in the right directory
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -20,7 +21,7 @@ class State:
         self.series = series
 
     def get_puzzle_path(self):
-        return f'Puzzles{os.path.sep}{self.series}{os.path.sep}'
+        return f'{get_config_path()}{os.path.sep}Puzzles{os.path.sep}{self.series}{os.path.sep}'
 
     def get_words_from_puzzle(self):
         return list(self.puzzle.keys())
@@ -315,7 +316,7 @@ def input_string(message, behavior, user_state, stdscr):
     if behavior == "words":
         tab_array = user_state.get_words_from_puzzle()
     elif behavior == "series":
-        tab_array = os.listdir(f"Puzzles")
+        tab_array = os.listdir(get_config_path() / "Puzzles")
     elif behavior == "puzzles":
         tab_array = []
         for i in range(len(os.listdir(user_state.get_puzzle_path()))):
