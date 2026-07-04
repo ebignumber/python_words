@@ -58,5 +58,11 @@ testpaths = ["tests"]
 [project.scripts]
 python_words = "python_words.main:main"
 
+[tool.setuptools]
+include-package-data = true
+
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+python_words = ['Puzzles/**/*.json']

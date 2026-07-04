@@ -3,10 +3,17 @@
 import os
 import sys
 import subprocess
+from python_words.config import get_config_path, initialize_user_config
 
 # Add the package root to the path so we can import the modules
 PACKAGE_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PACKAGE_ROOT)
+
+try:
+    os.listdir(get_config_path())
+except:
+    initialize_user_config()
+
 
 
 def clear_screen():
@@ -17,7 +24,6 @@ def clear_screen():
 def show_menu():
     """Display the main menu and handle user selection."""
     while True:
-        clear_screen()
         print("Welcome to Python Words!\n")
         print("What would you like to do?\n")
         print("1. Create Puzzles")
