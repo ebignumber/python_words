@@ -146,9 +146,10 @@ def collect_legal_letters(list):
 def read_command(command):
     global current_puzzle, puzzle_data, difficulty, letters, contracted, message
     match command:
-        #case "/":
-        #    with open(f"docs{os.path.sep}wordfinder-commands.txt", 'r') as f:
-        #        message = f.read()
+        case "/":
+            help_string_path = Path(__file__).parent / "help_strings" / "wordfinder-commands.txt"
+            with open(help_string_path, 'r') as f:
+                message = f.read()
 
         case "/COMPACT":
             letter_set = set(letters)

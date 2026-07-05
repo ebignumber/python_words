@@ -4,6 +4,7 @@ import os
 import json
 import curses
 import re
+from pathlib import Path
 from python_words.config import get_config_path
 
 # Ensure we're in the right directory
@@ -486,7 +487,8 @@ def read_input(user_input, user_state, stdscr):
                 return
             move_puzzle(puzzle_integer, location, user_state, stdscr)
         case key if key == '?' or key == chr(curses.KEY_HELP):
-            os.system('more ..\\docs\\creating-puzzles.txt' if os.name == 'nt' else 'less ../docs/creating-puzzles.txt')
+            help_string_path = Path(__file__).parent / "help_strings" / "creating-puzzles.txt"
+            os.system(f'more {help_string_path}' if os.name == 'nt' else f'less {help_string_path}')
         case _:
             return
 

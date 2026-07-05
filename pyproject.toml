@@ -65,4 +65,4 @@ include-package-data = true
 where = ["src"]
 
 [tool.setuptools.package-data]
-python_words = ['Puzzles/**/*.json']
+python_words = ['Puzzles/**/*.json', 'help_strings/**/*.txt']
