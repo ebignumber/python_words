@@ -11,15 +11,10 @@ Python Words is a game that is supposed to be like those word puzzle games on Go
 
 ## How do you start the game?
 
-To play the game just go to the game directory and run the wordfinder.py file like you would any other python file.
-
-## Dependencies
-
-This game requires Python; I made this using Python 3.12.3, and it will likely work on other version, but I haven't tested Word Finder on any of them.
-
-If you are trying to use the puzzle editor in a Windows system, you will need to install the windows-curses module. You may run the following command to do so:
-
-    pip install windows-curses
+    git clone https://github.com/ebignumber/python-words && cd python_words
+    uv venv
+    uv pip install -e .
+    uv run python-words
 
 ## How to play?
 
