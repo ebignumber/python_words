@@ -11,7 +11,7 @@ Python Words is a game that is supposed to be like those word puzzle games on Go
 
 ## How do you start the game?
 
-    git clone https://github.com/ebignumber/python_words && cd python_words
+    git clone https://github.com/ebignumber/python_words.git && cd python_words
     uv venv
     uv pip install -e .
     uv run python_words    
