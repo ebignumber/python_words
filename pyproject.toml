@@ -35,10 +35,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/ebignumber/python-words"
-Documentation = "https://github.com/ebignumber/python-words#readme"
-Repository = "https://github.com/ebignumber/python-words.git"
-Issues = "https://github.com/ebignumber/python-words/issues"
+Homepage = "https://github.com/ebignumber/python_words"
+Documentation = "https://github.com/ebignumber/python_words#readme"
+Repository = "https://github.com/ebignumber/python_words.git"
+Issues = "https://github.com/ebignumber/python_words/issues"
 
 [tool.black]
 line-length = 88
