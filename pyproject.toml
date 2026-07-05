@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "python_words"
-version = "0.1.0"
+version = "3.0.0"
 description = "A modern Python project boilerplate"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}
+    {name = "ebignumber", email = "ebignumber@tutamail.com"}
 ]
 keywords = ["puzzle", "words", "python"]
 classifiers = [
@@ -19,6 +19,8 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 dependencies = []
 
@@ -31,10 +33,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/my-project"
-Documentation = "https://github.com/yourusername/my-project#readme"
-Repository = "https://github.com/yourusername/my-project.git"
-Issues = "https://github.com/yourusername/my-project/issues"
+Homepage = "https://github.com/ebignumber/python-words"
+Documentation = "https://github.com/ebignumber/python-words#readme"
+Repository = "https://github.com/ebignumber/python-words.git"
+Issues = "https://github.com/ebignumber/python-words/issues"
 
 [tool.black]
 line-length = 88
@@ -46,7 +48,7 @@ select = ["E", "F", "I", "N", "W", "UP"]
 ignore = ["E501"]
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
